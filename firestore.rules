@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the user ID matches the current user
+    function isUser(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read;
+      allow create: if isAuthenticated() && isUser(userId);
+      allow update, delete: if isUser(userId);
+    }
+    
+    // Posts collection
+    match /posts/{postId} {
+      // Anyone can read posts
+      allow read;
+      
+      // Only authenticated users can create posts
+      allow create: if isAuthenticated();
+      
+      // Only the post owner can update or delete
+      allow update, delete: if isAuthenticated() && isUser(resource.data.userId);
+      
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && isUser(resource.data.userId);
+      }
+    }
+    
+    // Stories collection
+    match /stories/{storyId} {
+      allow read;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isUser(resource.data.userId);
+    }
+    
+    // For development purposes - remove before production
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
