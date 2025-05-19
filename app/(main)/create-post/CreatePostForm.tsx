@@ -28,6 +28,7 @@ export default function CreatePostForm() {
   const [productLink, setProductLink] = useState('');
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
+  const [creatorCode, setCreatorCode] = useState('');
 
   const handleMediaFilesChange = (files: File[]) => {
     setMediaFiles(files);
@@ -76,6 +77,7 @@ export default function CreatePostForm() {
         link: productLink,
         name: productName,
         description: productDescription,
+        creatorCode: creatorCode,
       } : null;
 
       // Create post document
@@ -211,6 +213,20 @@ export default function CreatePostForm() {
                 onChange={(e) => setProductDescription(e.target.value)}
                 className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
                 placeholder="Describe the product..."
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="creatorCode" className="block text-sm font-medium text-gtgram-dark mb-2">
+                Creator Code
+              </label>
+              <input
+                type="text"
+                id="creatorCode"
+                value={creatorCode}
+                onChange={(e) => setCreatorCode(e.target.value)}
+                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+                placeholder="Enter creator code (optional)"
               />
             </div>
           </div>

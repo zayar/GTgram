@@ -11,6 +11,7 @@ interface ProductInfoProps {
     name?: string;
     description?: string;
     price?: string;
+    creatorCode?: string;
   };
   onProductClick?: () => void;
 }
@@ -59,9 +60,17 @@ export default function ProductInfo({ productInfo, onProductClick }: ProductInfo
         </button>
       </div>
       
-      {expanded && productInfo.description && (
+      {expanded && (productInfo.description || productInfo.creatorCode) && (
         <div className="p-3 bg-white border-t border-gtgram-gray">
-          <p className="text-sm text-gray-600">{productInfo.description}</p>
+          {productInfo.description && (
+            <p className="text-sm text-gray-600 mb-2">{productInfo.description}</p>
+          )}
+          {productInfo.creatorCode && (
+            <div className="mt-1">
+              <p className="text-xs font-medium text-gtgram-dark">Creator Code:</p>
+              <p className="text-sm font-semibold text-gtgram-green">{productInfo.creatorCode}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

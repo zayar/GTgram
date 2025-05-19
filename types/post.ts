@@ -17,6 +17,7 @@ export interface ProductInfo {
   link: string;
   name?: string;
   description?: string;
+  creatorCode?: string;
 }
 
 export interface MediaItem {
