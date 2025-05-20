@@ -256,8 +256,8 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* New Post Button (visible on all devices) */}
-            {isOwnProfile && (
+            {/* New Post Button (visible only for own profile with bluemark) */}
+            {isOwnProfile && user?.bluemark && (
               <div className="flex justify-center my-6">
                 <Link 
                   href="/create-post"
