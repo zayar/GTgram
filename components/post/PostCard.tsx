@@ -225,8 +225,8 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
         <div className="text-xs sm:text-sm text-gtgram-dark opacity-50 mt-2">
           {post.createdAt && typeof post.createdAt === 'object' && post.createdAt !== null && 'toDate' in post.createdAt 
             ? formatDistanceToNow((post.createdAt as any).toDate(), { addSuffix: true })
-            : post.createdAt && post.createdAt instanceof Date 
-            ? formatDistanceToNow(post.createdAt, { addSuffix: true })
+            : post.createdAt && (post.createdAt as any) instanceof Date 
+            ? formatDistanceToNow(post.createdAt as Date, { addSuffix: true })
             : 'Recently'
           }
         </div>
