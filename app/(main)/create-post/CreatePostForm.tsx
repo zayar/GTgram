@@ -106,16 +106,16 @@ export default function CreatePostForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 bg-white shadow-sm rounded-lg">
-      <h1 className="text-2xl font-bold text-gtgram-dark mb-6">Create New Post</h1>
+    <div className="max-w-2xl mx-auto p-2 sm:p-4 bg-white shadow-sm rounded-lg">
+      <h1 className="text-xl sm:text-2xl font-bold text-gtgram-dark mb-4 sm:mb-6">Create New Post</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Media Upload Section */}
         <Suspense fallback={
-          <div className="border-2 border-dashed border-gtgram-gray rounded-lg p-8">
-            <div className="flex flex-col items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gtgram-green mb-4"></div>
-              <p className="text-gtgram-dark">Loading uploader...</p>
+          <div className="border-2 border-dashed border-gtgram-gray rounded-lg p-4 sm:p-8">
+            <div className="flex flex-col items-center justify-center h-48 sm:h-64">
+              <div className="animate-spin rounded-full h-8 sm:h-12 w-8 sm:w-12 border-t-2 border-b-2 border-gtgram-green mb-4"></div>
+              <p className="text-gtgram-dark text-sm sm:text-base">Loading uploader...</p>
             </div>
           </div>
         }>
@@ -132,7 +132,7 @@ export default function CreatePostForm() {
             rows={3}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+            className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base resize-none"
             placeholder="Write a caption..."
           />
         </div>
@@ -147,7 +147,7 @@ export default function CreatePostForm() {
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+            className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base"
             placeholder="Add location"
           />
         </div>
@@ -157,21 +157,21 @@ export default function CreatePostForm() {
           <button
             type="button"
             onClick={() => setShowProductLink(!showProductLink)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm border ${
+            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm border ${
               showProductLink 
                 ? 'border-gtgram-green bg-gtgram-green bg-opacity-10 text-gtgram-green' 
                 : 'border-gtgram-gray text-gtgram-dark'
             }`}
           >
-            <AiOutlineLink size={18} />
-            <span>{showProductLink ? 'Remove Product Link' : 'Add Product Link'}</span>
+            <AiOutlineLink size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="whitespace-nowrap">{showProductLink ? 'Remove Product Link' : 'Add Product Link'}</span>
           </button>
         </div>
         
         {/* Product Link Fields */}
         {showProductLink && (
-          <div className="space-y-4 p-4 border border-gtgram-gray rounded-lg bg-gray-50">
-            <h3 className="font-medium text-gtgram-dark">Product Information</h3>
+          <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border border-gtgram-gray rounded-lg bg-gray-50">
+            <h3 className="font-medium text-gtgram-dark text-sm sm:text-base">Product Information</h3>
             
             <div>
               <label htmlFor="productLink" className="block text-sm font-medium text-gtgram-dark mb-2">
@@ -182,7 +182,7 @@ export default function CreatePostForm() {
                 id="productLink"
                 value={productLink}
                 onChange={(e) => setProductLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base"
                 placeholder="https://example.com/product"
                 required={showProductLink}
               />
@@ -197,7 +197,7 @@ export default function CreatePostForm() {
                 id="productName"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base"
                 placeholder="Enter product name"
               />
             </div>
@@ -211,7 +211,7 @@ export default function CreatePostForm() {
                 rows={2}
                 value={productDescription}
                 onChange={(e) => setProductDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base resize-none"
                 placeholder="Describe the product..."
               />
             </div>
@@ -225,7 +225,7 @@ export default function CreatePostForm() {
                 id="creatorCode"
                 value={creatorCode}
                 onChange={(e) => setCreatorCode(e.target.value)}
-                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green"
+                className="w-full px-3 py-2 border border-gtgram-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-gtgram-green text-sm sm:text-base"
                 placeholder="Enter creator code (optional)"
               />
             </div>
@@ -233,7 +233,7 @@ export default function CreatePostForm() {
         )}
 
         {error && (
-          <div className="text-red-500 text-sm p-3 bg-red-50 rounded-lg">{error}</div>
+          <div className="text-red-500 text-sm p-3 bg-red-50 rounded-lg break-words">{error}</div>
         )}
 
         {/* Upload Progress */}
@@ -241,11 +241,11 @@ export default function CreatePostForm() {
           <div className="space-y-2">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-gtgram-green h-2.5 rounded-full" 
+                className="bg-gtgram-green h-2.5 rounded-full transition-all duration-300" 
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-sm text-center text-gtgram-dark">
+            <p className="text-xs sm:text-sm text-center text-gtgram-dark">
               Uploading: {uploadProgress}%
             </p>
           </div>
@@ -255,7 +255,7 @@ export default function CreatePostForm() {
         <button
           type="submit"
           disabled={loading || mediaFiles.length === 0}
-          className={`w-full py-3 px-4 rounded-lg font-semibold ${
+          className={`w-full py-3 px-4 rounded-lg font-semibold text-sm sm:text-base ${
             loading || mediaFiles.length === 0
               ? 'bg-gtgram-green/50 cursor-not-allowed'
               : 'bg-gtgram-green hover:bg-gtgram-green/90'

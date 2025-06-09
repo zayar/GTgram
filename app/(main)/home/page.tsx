@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 // Dynamic imports for components with loading states
 const StoryBar = dynamic(() => import('@/components/post/StoryBar'), {
   loading: () => (
-    <div className="h-24 bg-white rounded-lg mb-4 animate-pulse"></div>
+    <div className="h-20 sm:h-24 bg-white rounded-lg mb-4 animate-pulse"></div>
   ),
   ssr: false
 });
@@ -28,8 +28,8 @@ export default function HomePage() {
   
   return (
     <MainLayout>
-      <div className="max-w-xl mx-auto">
-        <Suspense fallback={<div className="h-24 bg-white rounded-lg mb-4 animate-pulse"></div>}>
+      <div className="w-full max-w-xl mx-auto px-2 sm:px-4">
+        <Suspense fallback={<div className="h-20 sm:h-24 bg-white rounded-lg mb-4 animate-pulse"></div>}>
           <StoryBar />
         </Suspense>
         

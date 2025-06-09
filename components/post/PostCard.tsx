@@ -119,19 +119,19 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
     []);
 
   return (
-    <div className="bg-white border-b md:border border-gtgram-gray md:rounded-lg mb-4 md:mb-6">
+    <div className="bg-white border-b md:border border-gtgram-gray md:rounded-lg mb-2 md:mb-6 w-full overflow-hidden">
       {/* Post Header */}
-      <div className="flex items-center p-3 md:p-4">
-        <Link href={`/profile/${post.userId}`} className="flex items-center flex-grow">
+      <div className="flex items-center p-2 sm:p-3 md:p-4">
+        <Link href={`/profile/${post.userId}`} className="flex items-center flex-grow min-w-0">
           <UserAvatar
             src={post.userPhotoURL}
             alt={post.username || 'User'}
             size={32}
-            className="mr-3"
+            className="mr-2 sm:mr-3 flex-shrink-0"
           />
-          <div className="flex items-center">
-            <span className="font-semibold text-gtgram-dark">{post.username}</span>
-            {post.bluemark && <BlueMark size={12} className="ml-1" />}
+          <div className="flex items-center min-w-0">
+            <span className="font-semibold text-gtgram-dark text-sm sm:text-base truncate">{post.username}</span>
+            {post.bluemark && <BlueMark size={12} className="ml-1 flex-shrink-0" />}
           </div>
         </Link>
         
@@ -158,17 +158,17 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
       )}
 
       {/* Post Actions */}
-      <div className="p-3 md:p-4">
+      <div className="p-2 sm:p-3 md:p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <button 
               onClick={handleLike}
-              className="text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors"
+              className="text-xl sm:text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors"
             >
               {isLiked ? <AiFillHeart className="text-gtgram-green" /> : <AiOutlineHeart />}
             </button>
             <Link href={`/post/${post.id}`}>
-              <AiOutlineMessage className="text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors" />
+              <AiOutlineMessage className="text-xl sm:text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors" />
             </Link>
           </div>
           
@@ -177,138 +177,75 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
             {hasProductInfo && (
               <button 
                 onClick={toggleProductFrame}
-                className="mr-4"
+                className="mr-3 sm:mr-4"
                 aria-label="View product"
               >
-                <RiShoppingBagFill className="text-2xl text-gtgram-green hover:text-gtgram-light-green transition-colors" />
+                <RiShoppingBagFill className="text-xl sm:text-2xl text-gtgram-green hover:text-gtgram-light-green transition-colors" />
               </button>
             )}
-            <button onClick={handleSave} className="text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors">
+            <button onClick={handleSave} className="text-xl sm:text-2xl text-gtgram-dark hover:text-gtgram-green transition-colors">
               {isSaved ? <BsBookmarkFill className="text-gtgram-green" /> : <BsBookmark />}
             </button>
           </div>
         </div>
 
         {/* Likes Count */}
-        <div className="mt-2 font-semibold text-gtgram-dark">
+        <div className="mt-2 font-semibold text-gtgram-dark text-sm sm:text-base">
           {likesCount} {likesCount === 1 ? 'like' : 'likes'}
         </div>
 
         {/* Caption */}
         {post.caption && (
           <div className="mt-1">
-            <div className="flex">
-              <Link href={`/profile/${post.userId}`} className="font-semibold text-gtgram-dark mr-1">
-                {post.username}
-              </Link>
-              <span className="text-gtgram-dark">{captionToShow}</span>
+            <div className="flex flex-wrap">
+              <span className="font-semibold text-gtgram-dark mr-2 text-sm sm:text-base">{post.username}</span>
+              <span className="text-gtgram-dark text-sm sm:text-base break-words">
+                {captionToShow}
+                {shouldTruncateCaption && (
+                  <button 
+                    onClick={() => setShowAllCaption(true)}
+                    className="text-gtgram-dark ml-2 opacity-50 hover:opacity-75"
+                  >
+                    more
+                  </button>
+                )}
+              </span>
             </div>
-            {shouldTruncateCaption && (
-              <button 
-                onClick={() => setShowAllCaption(true)}
-                className="text-gray-500 text-sm"
-              >
-                more
-              </button>
-            )}
-          </div>
-        )}
-        
-        {/* Product Info - with click handler */}
-        {hasProductInfo && post.productInfo && (
-          <div className="mt-3">
-            {/* Small hint text to indicate clickable */}
-            <div className="flex items-center justify-center text-xs text-gtgram-green mb-1">
-              <RiShoppingBagFill className="mr-1" /> 
-              <span>Tap to view product</span>
-            </div>
-            <ProductInfo 
-              productInfo={post.productInfo} 
-              onProductClick={toggleProductFrame}
-            />
           </div>
         )}
 
-        {/* Comments Count */}
-        {post.comments?.length > 0 && (
-          <Link href={`/post/${post.id}`} className="block mt-1 text-gray-500 text-sm">
-            View all {post.comments.length} comments
-          </Link>
+        {/* Location */}
+        {post.location && (
+          <div className="text-xs sm:text-sm text-gtgram-dark opacity-70 mt-1">
+            📍 {post.location}
+          </div>
         )}
 
         {/* Timestamp */}
-        <div className="mt-1 text-xs text-gray-500">
-          {formatDistanceToNow(post.createdAt?.toDate() || new Date(), { addSuffix: true })}
-        </div>
-      </div>
-      
-      {/* Comment Input - mobile style like Instagram */}
-      <div className="px-3 py-2 border-t border-gtgram-gray md:hidden">
-        <div className="flex items-center">
-          <UserAvatar 
-            src={user?.photoURL}
-            alt="Your profile"
-            size={32}
-            className="mr-2"
-          />
-          <input
-            type="text"
-            placeholder="Add a comment..."
-            className="bg-transparent text-sm flex-grow focus:outline-none"
-          />
-          <button className="text-gtgram-green text-sm font-semibold opacity-50">Post</button>
+        <div className="text-xs sm:text-sm text-gtgram-dark opacity-50 mt-2">
+          {post.createdAt && typeof post.createdAt === 'object' && post.createdAt !== null && 'toDate' in post.createdAt 
+            ? formatDistanceToNow((post.createdAt as any).toDate(), { addSuffix: true })
+            : post.createdAt && post.createdAt instanceof Date 
+            ? formatDistanceToNow(post.createdAt, { addSuffix: true })
+            : 'Recently'
+          }
         </div>
       </div>
 
-      {/* Slide Up Product Modal */}
-      {showProductFrame && hasProductInfo && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col justify-end"
-          onClick={toggleProductFrame}
-        >
-          <div 
-            className="bg-white rounded-t-3xl w-full max-h-[70vh] transition-transform duration-300 transform animate-slide-up shadow-2xl border-t border-gtgram-gray"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Drag Handle */}
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-3"></div>
+      {/* Product Info Frame Modal */}
+      {showProductFrame && hasProductInfo && post.productInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-2 sm:p-4">
+          <div className="relative w-full max-w-4xl h-full max-h-[90vh] bg-white rounded-lg overflow-hidden">
+            {/* Close button */}
+            <button
+              onClick={toggleProductFrame}
+              className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <AiOutlineClose size={20} />
+            </button>
             
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gtgram-gray sticky top-0 z-10 bg-white">
-              <div className="font-medium flex items-center overflow-hidden">
-                <RiShoppingBagFill className="text-gtgram-green mr-2 flex-shrink-0" size={20} />
-                <div className="overflow-hidden">
-                  <p className="text-lg truncate">{post.productInfo?.name || 'Product'}</p>
-                  {post.productInfo && typeof post.productInfo === 'object' && 
-                   'price' in post.productInfo && 
-                   typeof post.productInfo.price === 'string' && (
-                    <p className="text-sm text-gray-500">{post.productInfo.price}</p>
-                  )}
-                </div>
-              </div>
-              <button 
-                onClick={toggleProductFrame}
-                className="text-gtgram-dark p-2 rounded-full hover:bg-gray-100 transition-colors ml-2 flex-shrink-0"
-                aria-label="Close product view"
-              >
-                <AiOutlineClose size={22} />
-              </button>
-            </div>
-            
-            {/* Product iframe */}
-            <div className="relative h-[450px] max-h-[calc(70vh-70px)] w-full bg-white" ref={iframeRef}>
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-gtgram-green"></div>
-                <span className="ml-3 text-gray-500">Loading product...</span>
-              </div>
-              <iframe 
-                src={post.productInfo?.link} 
-                className="absolute inset-0 w-full h-full border-0 z-10" 
-                title="Product View"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                loading="lazy"
-              />
-            </div>
+            {/* Product Info Component */}
+            <ProductInfo productInfo={post.productInfo} />
           </div>
         </div>
       )}

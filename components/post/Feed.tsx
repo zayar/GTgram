@@ -139,13 +139,15 @@ export default function Feed() {
       {!loading && posts.length === 0 && emptyStateMessage}
       
       {/* Posts feed */}
-      {posts.map(post => (
-        <PostCard 
-          key={post.id}
-          post={post}
-          onLike={handleLike}
-        />
-      ))}
+      <div className="w-full overflow-hidden">
+        {posts.map(post => (
+          <PostCard 
+            key={post.id}
+            post={post}
+            onLike={handleLike}
+          />
+        ))}
+      </div>
     </div>
   );
 } 

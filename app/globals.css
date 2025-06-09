@@ -10,6 +10,64 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+html {
+  overflow-x: hidden; /* Prevent horizontal scrolling at html level */
+}
+
+/* Ensure all containers don't exceed viewport width */
+* {
+  box-sizing: border-box;
+}
+
+/* Prevent elements from creating horizontal overflow */
+.container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Mobile-specific responsive adjustments */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  
+  /* Ensure images and videos don't exceed container */
+  img, video, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Ensure text doesn't create overflow */
+  p, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Override max-width constraints on mobile for full width */
+  .max-w-xl,
+  .max-w-2xl,
+  .max-w-4xl {
+    max-width: 100%;
+  }
+}
+
+/* Desktop adjustments - ensure proper centering */
+@media (min-width: 641px) {
+  .max-w-xl {
+    max-width: 36rem; /* 576px */
+  }
+  
+  .max-w-2xl {
+    max-width: 42rem; /* 672px */
+  }
+  
+  .max-w-4xl {
+    max-width: 56rem; /* 896px */
+  }
 }
 
 @layer components {
@@ -36,5 +94,12 @@ body {
   .scrollbar-none {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+  }
+  
+  /* Utility class to prevent horizontal overflow */
+  .no-horizontal-overflow {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 } 
