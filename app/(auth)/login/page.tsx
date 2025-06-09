@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
 import Image from 'next/image';
 
 export default function LoginPage() {
@@ -13,6 +14,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!isLoading && user) {
+      console.log('User is already logged in, redirecting to home...');
+      router.push('/home');
+    }
+  }, [user, isLoading, router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,16 +30,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/home');
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful:', result.user.uid);
+      // Don't manually redirect here - let the auth state change handle it
+      // router.push('/home');
     } catch (error: any) {
+      console.error('Login error:', error);
       setError(
         error.code === 'auth/invalid-credential'
           ? 'Invalid email or password'
           : error.message
       );
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
   };
 
@@ -39,14 +51,30 @@ export default function LoginPage() {
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/home');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google login successful:', result.user.uid);
+      // Don't manually redirect here - let the auth state change handle it
+      // router.push('/home');
     } catch (error: any) {
+      console.error('Google login error:', error);
       setError(error.message);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
   };
+
+  // Show loading if checking auth or in the process of logging in
+  if (isLoading || (user && !error)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gtgram-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gtgram-green mx-auto mb-4"></div>
+          <p className="text-gtgram-dark">
+            {user ? 'Redirecting...' : 'Checking authentication...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gtgram-white px-4">
@@ -101,6 +129,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleLogin}
           className="flex items-center justify-center w-full py-2 px-4 rounded-lg border border-gtgram-gray bg-white hover:bg-gtgram-offwhite transition duration-200"
+          disabled={loading}
         >
           <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="mr-2">
             <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
