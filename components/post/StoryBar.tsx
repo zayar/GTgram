@@ -24,7 +24,10 @@ export default function StoryBar() {
 
   useEffect(() => {
     const checkUserBluemark = async () => {
-      if (!currentUser) return;
+      if (!currentUser || !currentUser.uid) {
+        console.log('No current user or uid available for bluemark check');
+        return;
+      }
       
       try {
         const userDocRef = doc(db, 'users', currentUser.uid);
@@ -71,7 +74,7 @@ export default function StoryBar() {
           });
           
           // If current user exists, move them to the beginning of the array
-          if (currentUser) {
+          if (currentUser && Array.isArray(users)) {
             // Find the current user in the array
             const currentUserIndex = users.findIndex(user => user.id === currentUser.uid);
             

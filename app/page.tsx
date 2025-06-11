@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import Image from 'next/image';
 
 export default function Home() {
   const router = useRouter();
@@ -12,8 +11,10 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
+        console.log('Root page: User exists, redirecting to /home');
         router.push('/home');
       } else {
+        console.log('Root page: No user, redirecting to /login');
         router.push('/login');
       }
     }
@@ -26,6 +27,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold font-cursive mb-4">GTgram</h1>
       </div>
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      <p className="mt-4 text-sm text-gray-300">Loading...</p>
     </div>
   );
 } 

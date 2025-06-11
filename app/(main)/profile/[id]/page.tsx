@@ -99,7 +99,8 @@ export default function ProfilePage() {
 
       // Check if current user is following this profile
       if (currentUser) {
-        setIsFollowing(user.followers?.includes(currentUser.uid) || false);
+        const followers = user.followers || [];
+        setIsFollowing(Array.isArray(followers) && followers.includes(currentUser.uid));
       }
     }
   }, [user, currentUser]);

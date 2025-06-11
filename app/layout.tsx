@@ -2,6 +2,13 @@ import './globals.css';
 import { Providers } from './providers';
 import type { Metadata, Viewport } from 'next';
 import ServiceWorkerRegistration from '@/components/utils/ServiceWorkerRegistration';
+import { Inter } from 'next/font/google';
+import AuthProvider from '@/components/auth/AuthProvider';
+import AutoAction from '@/components/AutoAction';
+import ClearStorage from '@/components/debug/ClearStorage';
+import { Suspense } from 'react';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'GTgram - Share your moments',
@@ -13,7 +20,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-}
+};
 
 export default function RootLayout({
   children,
@@ -22,11 +29,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-white text-gtgram-dark min-h-screen no-horizontal-overflow">
-        <Providers>
-          {children}
-          <ServiceWorkerRegistration />
-        </Providers>
+      <body className={`${inter.className} bg-white text-gtgram-dark min-h-screen no-horizontal-overflow`}>
+        <ClearStorage />
+        <AuthProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <AutoAction>
+              <Providers>
+                {children}
+                <ServiceWorkerRegistration />
+              </Providers>
+            </AutoAction>
+          </Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -97,7 +97,8 @@ export default function PostDetailPage() {
         
         // Check if current user has liked the post
         if (currentUser) {
-          setLiked(formattedPost.likes.includes(currentUser.uid));
+          const likes = formattedPost.likes || [];
+          setLiked(Array.isArray(likes) && likes.includes(currentUser.uid));
         }
           
         // Set user data
@@ -152,7 +153,8 @@ export default function PostDetailPage() {
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             const userData = userSnap.data();
-            setSaved(userData.savedPosts?.includes(id) || false);
+            const savedPosts = userData.savedPosts || [];
+            setSaved(Array.isArray(savedPosts) && savedPosts.includes(id));
           }
         }
 
@@ -276,7 +278,8 @@ export default function PostDetailPage() {
       if (commentIndex === -1) return;
       
       const comment = comments[commentIndex];
-      const hasReacted = comment.reactions?.includes(currentUser.uid);
+      const reactions = comment.reactions || [];
+      const hasReacted = Array.isArray(reactions) && reactions.includes(currentUser.uid);
       
       // Reference to the comment document
       const commentRef = doc(db, 'posts', post.id, 'comments', commentId);

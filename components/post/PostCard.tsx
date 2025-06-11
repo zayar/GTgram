@@ -17,6 +17,7 @@ import PostActionsMenu from './PostActionsMenu';
 import placeholders from '@/lib/placeholders';
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { isValidUser, arrayIncludesUserId } from '@/lib/utils/userValidation';
 
 interface PostCardProps {
   post: Post;
@@ -30,8 +31,8 @@ const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaH
 export default function PostCard({ post, onLike, isDetailView = false }: PostCardProps) {
   const { user } = useAuth();
   const likes = post?.likes || [];
-  const [isLiked, setIsLiked] = useState(user ? likes.includes(user.uid) : false);
-  const [likesCount, setLikesCount] = useState(likes.length);
+  const [isLiked, setIsLiked] = useState(isValidUser(user) && user ? arrayIncludesUserId(likes, user.uid) : false);
+  const [likesCount, setLikesCount] = useState(Array.isArray(likes) ? likes.length : 0);
   const [showAllCaption, setShowAllCaption] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showProductFrame, setShowProductFrame] = useState(false);
@@ -40,7 +41,10 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
   useEffect(() => {
     // Check if the post is saved by the current user
     const checkIfSaved = async () => {
-      if (!user) return;
+      if (!isValidUser(user) || !user) {
+        console.log('No valid user available for saved status check');
+        return;
+      }
       
       try {
         const userRef = doc(db, 'users', user.uid);
@@ -48,8 +52,9 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          const savedPosts = userData.savedPosts || [];
-          setIsSaved(savedPosts.includes(post.id));
+          const savedPosts = userData?.savedPosts || [];
+          // Use safe array validation
+          setIsSaved(arrayIncludesUserId(savedPosts, post.id));
         }
       } catch (error) {
         console.error('Error checking saved status:', error);
@@ -73,7 +78,7 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
   }, [showProductFrame]);
 
   const handleLike = async () => {
-    if (!user || !onLike) return;
+    if (!isValidUser(user) || !user || !onLike) return;
     
     setIsLiked(!isLiked);
     setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
@@ -81,7 +86,7 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
   };
 
   const handleSave = async () => {
-    if (!user || !post) return;
+    if (!isValidUser(user) || !user || !post) return;
     
     try {
       const userRef = doc(db, 'users', user.uid);

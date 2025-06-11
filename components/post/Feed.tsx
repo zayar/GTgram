@@ -108,7 +108,7 @@ export default function Feed() {
       if (!postDoc.exists()) return;
       
       const postLikes = postDoc.data().likes || [];
-      const isLiked = postLikes.includes(user.uid);
+      const isLiked = Array.isArray(postLikes) && postLikes.includes(user.uid);
       
       await updateDoc(postRef, {
         likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)

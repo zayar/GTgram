@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import Image from 'next/image';
+import { createCleanUserObject } from '@/lib/utils/userValidation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,13 +16,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
+    console.log('Login page useEffect triggered:', { user: !!user, isLoading, userUid: user?.uid });
+    
     if (!isLoading && user) {
-      console.log('User is already logged in, redirecting to home...');
-      router.push('/home');
+      console.log('User is already logged in, redirecting to home...', user.uid);
+      // Small delay to ensure state is fully updated
+      setTimeout(() => {
+        router.push('/home');
+      }, 100);
     }
   }, [user, isLoading, router]);
 
@@ -30,10 +37,48 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Authenticate with Firebase
       const result = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login successful:', result.user.uid);
-      // Don't manually redirect here - let the auth state change handle it
-      // router.push('/home');
+      const firebaseUser = result.user;
+      console.log('Firebase login successful:', firebaseUser.uid);
+
+      // Get user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found. Please contact support.');
+      }
+
+      const firestoreData = userDoc.data();
+      
+      // Create clean user object for localStorage
+      const userData = createCleanUserObject({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName,
+        photoURL: firestoreData.photoURL || firebaseUser.photoURL,
+        username: firestoreData.username,
+        fullName: firestoreData.fullName,
+        bio: firestoreData.bio,
+        followers: firestoreData.followers || [],
+        following: firestoreData.following || [],
+        phoneNumber: firebaseUser.phoneNumber,
+        emailVerified: firebaseUser.emailVerified,
+        providerId: firebaseUser.providerId,
+        metadata: firebaseUser.metadata,
+        createdVia: 'email_login'
+      });
+
+      if (!userData) {
+        throw new Error('Failed to create user data object');
+      }
+
+      // Use the new login method from AuthProvider
+      login(userData);
+      
+      console.log('Email login completed, user logged in:', userData.uid);
+      
+      // Note: Redirect will be handled by the useEffect
+      
     } catch (error: any) {
       console.error('Login error:', error);
       setError(
@@ -41,7 +86,8 @@ export default function LoginPage() {
           ? 'Invalid email or password'
           : error.message
       );
-      setLoading(false); // Only set loading to false on error
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,13 +98,51 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      console.log('Google login successful:', result.user.uid);
-      // Don't manually redirect here - let the auth state change handle it
-      // router.push('/home');
+      const firebaseUser = result.user;
+      console.log('Google login successful:', firebaseUser.uid);
+
+      // Get user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found. Please register first.');
+      }
+
+      const firestoreData = userDoc.data();
+      
+      // Create clean user object for localStorage
+      const userData = createCleanUserObject({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName,
+        photoURL: firestoreData.photoURL || firebaseUser.photoURL,
+        username: firestoreData.username,
+        fullName: firestoreData.fullName,
+        bio: firestoreData.bio,
+        followers: firestoreData.followers || [],
+        following: firestoreData.following || [],
+        phoneNumber: firebaseUser.phoneNumber,
+        emailVerified: firebaseUser.emailVerified,
+        providerId: firebaseUser.providerId,
+        metadata: firebaseUser.metadata,
+        createdVia: 'google_login'
+      });
+
+      if (!userData) {
+        throw new Error('Failed to create user data object');
+      }
+
+      // Use the new login method from AuthProvider
+      login(userData);
+      
+      console.log('Google login completed, user logged in:', userData.uid);
+      
+      // Note: Redirect will be handled by the useEffect
+      
     } catch (error: any) {
       console.error('Google login error:', error);
       setError(error.message);
-      setLoading(false); // Only set loading to false on error
+    } finally {
+      setLoading(false);
     }
   };
 
