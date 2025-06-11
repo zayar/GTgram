@@ -47,47 +47,50 @@ export default function StoryBar() {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!currentUser?.uid) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Query users collection, limit to 10 users
-        const usersQuery = query(
-          collection(db, 'users'),
-          orderBy('username'),
-          limit(10)
-        );
-        
-        const usersSnapshot = await getDocs(usersQuery);
-        
-        if (!usersSnapshot.empty) {
-          let users = usersSnapshot.docs.map(doc => {
-            const userData = doc.data() as User;
-            
-            // For now, randomly determine if user has a story
-            // In a real app, you would check if the user has posted a story in the last 24 hours
-            const hasNewStory = Math.random() > 0.5;
+        // First, get the current user's document to get their 'following' list
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+          setLoading(false);
+          return;
+        }
+
+        const userData = userDoc.data() as User;
+        const following = userData.following || [];
+
+        if (following.length === 0) {
+          setStoryUsers([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch the user profiles of the people being followed
+        const userPromises = following.map(userId => getDoc(doc(db, 'users', userId)));
+        const userSnapshots = await Promise.all(userPromises);
+
+        let users = userSnapshots
+          .filter(snapshot => snapshot.exists())
+          .map(snapshot => {
+            const followedUserData = snapshot.data() as User;
+            const hasNewStory = Math.random() > 0.5; // Placeholder logic
             
             return {
-              id: doc.id,
-              username: userData.username || 'user',
-              avatar: userData.photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI0UwRTBFMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2NjYiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlVzZXI8L3RleHQ+PC9zdmc+',
+              id: snapshot.id,
+              username: followedUserData.username || 'user',
+              avatar: followedUserData.photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI0UwRTBFMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2NjYiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlVzZXI8L3RleHQ+PC9zdmc+',
               hasNewStory
             };
           });
-          
-          // If current user exists, move them to the beginning of the array
-          if (currentUser && Array.isArray(users)) {
-            // Find the current user in the array
-            const currentUserIndex = users.findIndex(user => user.id === currentUser.uid);
-            
-            // If current user is in the array, move them to the beginning
-            if (currentUserIndex !== -1) {
-              const currentUserStory = users[currentUserIndex];
-              users.splice(currentUserIndex, 1); // Remove from current position
-              users.unshift(currentUserStory); // Add to beginning
-            }
-          }
-          
-          setStoryUsers(users);
-        }
+
+        setStoryUsers(users);
+
       } catch (error) {
         console.error('Error fetching users for story bar:', error);
       } finally {

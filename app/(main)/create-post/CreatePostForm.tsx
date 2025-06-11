@@ -51,11 +51,14 @@ export default function CreatePostForm() {
       setError('');
       setUploadProgress(0);
 
+      // Compress images before upload
+      const processedFiles = await processFiles(mediaFiles);
+
       // Upload all media files
-      const totalFiles = mediaFiles.length;
+      const totalFiles = processedFiles.length;
       let completedFiles = 0;
       
-      const uploadPromises = mediaFiles.map(async (file, index) => {
+      const uploadPromises = processedFiles.map(async (file, index) => {
         const fileRef = ref(storage, `posts/${user.uid}/${Date.now()}-${file.name}`);
         
         // Upload file
@@ -70,7 +73,7 @@ export default function CreatePostForm() {
       const uploadedUrls = await Promise.all(uploadPromises);
 
       // Determine media type - video if the first file is video, otherwise image
-      const isVideo = mediaFiles[0].type.startsWith('video/');
+      const isVideo = processedFiles[0].type.startsWith('video/');
       
       // Create product info object if product link is provided
       const productInfo = showProductLink && productLink ? {

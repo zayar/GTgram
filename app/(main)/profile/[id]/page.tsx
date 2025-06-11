@@ -29,6 +29,7 @@ import { FiTag } from 'react-icons/fi';
 import placeholders from '@/lib/placeholders';
 import BlueMark from '@/components/ui/BlueMark';
 import { useUserProfile, usePosts, useSavedPosts } from '@/lib/hooks/useFirebaseQuery';
+import { IoArrowBack } from 'react-icons/io5';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -186,6 +187,9 @@ export default function ProfilePage() {
                 {/* Username and Buttons */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4">
                   <div className="flex items-center gap-2">
+                    <Link href="/home" className="text-xl md:text-2xl font-light mr-4">
+                        <IoArrowBack />
+                    </Link>
                     <h1 className="text-xl md:text-2xl font-light">{user?.username}</h1>
                     {user?.bluemark && <BlueMark size={20} />}
                   </div>

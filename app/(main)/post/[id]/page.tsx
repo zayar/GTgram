@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  doc, 
-  getDoc, 
-  collection, 
-  query, 
-  orderBy, 
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  orderBy,
   getDocs,
   updateDoc,
   arrayUnion,
@@ -31,6 +31,7 @@ import ProductInfo from '@/components/post/ProductInfo';
 import BlueMark from '@/components/ui/BlueMark';
 import { RiShoppingBagFill } from 'react-icons/ri';
 import ReactionButton from '@/components/post/ReactionButton';
+import { IoArrowBack } from 'react-icons/io5';
 
 // Define a simpler Comment type for this page
 interface Comment {
@@ -49,6 +50,7 @@ interface Comment {
 
 export default function PostDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [post, setPost] = useState<PostType | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -77,14 +79,14 @@ export default function PostDetailPage() {
         }
 
         const postData = postDoc.data();
-        
+
         // Fetch post author data to get bluemark status
         const userDoc = await getDoc(doc(db, 'users', postData.userId));
         const userData = userDoc.exists() ? userDoc.data() : null;
         const bluemark = userData?.bluemark || false;
-        
-        const formattedPost: PostType = { 
-          id: postDoc.id, 
+
+        const formattedPost: PostType = {
+          id: postDoc.id,
           ...postData,
           likes: postData.likes || [],
           mediaUrls: postData.mediaUrls || [],
@@ -92,20 +94,20 @@ export default function PostDetailPage() {
           productInfo: postData.productInfo || null,
           bluemark
         } as unknown as PostType;
-        
+
         setPost(formattedPost);
-        
+
         // Check if current user has liked the post
         if (currentUser) {
           const likes = formattedPost.likes || [];
           setLiked(Array.isArray(likes) && likes.includes(currentUser.uid));
         }
-          
+
         // Set user data
         if (userDoc.exists()) {
           setUser(userDoc.data());
         }
-        
+
         // Fetch comments
         const commentsQuery = query(
           collection(db, 'posts', id, 'comments'),
@@ -113,40 +115,16 @@ export default function PostDetailPage() {
         );
         
         const commentsSnapshot = await getDocs(commentsQuery);
-        const commentsList = await Promise.all(
-          commentsSnapshot.docs.map(async (commentDoc) => {
-            const commentData = commentDoc.data();
-            const userDocRef = doc(db, 'users', commentData.userId);
-            const userSnap = await getDoc(userDocRef);
-            let userName = 'Unknown User';
-            let userPhoto = placeholders.avatar;
-            let bluemark = false;
-
-            if (userSnap.exists()) {
-              const userData = userSnap.data();
-              userName = userData.username || 'Anonymous';
-              userPhoto = userData.photoURL || placeholders.avatar;
-              bluemark = userData.bluemark || false;
-            }
-            
-            return {
-              id: commentDoc.id,
-              text: commentData.text,
-              userId: commentData.userId,
-              postId: commentData.postId || id,
-              createdAt: commentData.createdAt,
-              reactions: commentData.reactions || [], // Add reactions field
-              user: {
-                username: userName,
-                photoURL: userPhoto,
-                bluemark
-              }
-            } as Comment;
-          })
-        );
+        const commentsList = commentsSnapshot.docs.map((commentDoc) => {
+          const commentData = commentDoc.data();
+          return {
+            id: commentDoc.id,
+            ...commentData
+          } as Comment;
+        });
         
         setComments(commentsList);
-        
+
         // Check if post is saved by current user
         if (currentUser) {
           const userRef = doc(db, 'users', currentUser.uid);
@@ -179,10 +157,10 @@ export default function PostDetailPage() {
 
   const handleLike = async () => {
     if (!currentUser || !post) return;
-    
+
     try {
       const postRef = doc(db, 'posts', post.id);
-      
+
       if (liked) {
         // Unlike post
         await updateDoc(postRef, {
@@ -202,7 +180,7 @@ export default function PostDetailPage() {
           likes: [...post.likes, currentUser.uid]
         });
       }
-      
+
       setLiked(!liked);
     } catch (error) {
       console.error('Error updating like:', error);
@@ -211,10 +189,10 @@ export default function PostDetailPage() {
 
   const handleSave = async () => {
     if (!currentUser || !post) return;
-    
+
     try {
       const userRef = doc(db, 'users', currentUser.uid);
-      
+
       if (saved) {
         // Unsave post
         await updateDoc(userRef, {
@@ -226,7 +204,7 @@ export default function PostDetailPage() {
           savedPosts: arrayUnion(post.id)
         });
       }
-      
+
       setSaved(!saved);
     } catch (error) {
       console.error('Error updating saved posts:', error);
@@ -236,33 +214,31 @@ export default function PostDetailPage() {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !post || !commentText.trim()) return;
-    
+
     try {
       const newComment = {
         postId: post.id,
         userId: currentUser.uid,
         text: commentText,
         createdAt: serverTimestamp(),
-        reactions: [] // Initialize empty reactions array
-      };
-      
-      const docRef = await addDoc(collection(db, 'posts', post.id, 'comments'), newComment);
-      
-      // Add to local state with properly typed timestamp
-      const newCommentForState: Comment = {
-        id: docRef.id,
-        postId: post.id,
-        userId: currentUser.uid,
-        text: commentText,
-        createdAt: Timestamp.now(),
         reactions: [], // Initialize empty reactions array
+        // Denormalize user data for performance
         user: {
           username: currentUser.displayName || 'Anonymous',
-          photoURL: currentUser.photoURL || placeholders.avatar
+          photoURL: currentUser.photoURL || placeholders.avatar,
+          bluemark: (currentUser as any).bluemark || false,
         }
       };
-      
-      setComments([...comments, newCommentForState]);
+
+      const docRef = await addDoc(collection(db, 'posts', post.id, 'comments'), newComment);
+
+      // Update comment state locally
+      setComments([...comments, {
+        id: docRef.id,
+        ...newComment,
+        createdAt: new Date(), // Use local time for immediate feedback
+      } as Comment]);
+
       setCommentText('');
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -270,49 +246,43 @@ export default function PostDetailPage() {
   };
 
   const handleCommentReaction = async (commentId: string) => {
-    if (!currentUser || !post) return;
-    
+    if (!currentUser) return;
+
+    const commentRef = doc(db, 'posts', id as string, 'comments', commentId);
+
+    // Find the comment and check if already reacted
+    const comment = comments.find(c => c.id === commentId);
+    if (!comment) return;
+
+    const isReacted = comment.reactions?.includes(currentUser.uid) || false;
+
     try {
-      // Find the comment in our local state
-      const commentIndex = comments.findIndex(c => c.id === commentId);
-      if (commentIndex === -1) return;
-      
-      const comment = comments[commentIndex];
-      const reactions = comment.reactions || [];
-      const hasReacted = Array.isArray(reactions) && reactions.includes(currentUser.uid);
-      
-      // Reference to the comment document
-      const commentRef = doc(db, 'posts', post.id, 'comments', commentId);
-      
-      if (hasReacted) {
+      if (isReacted) {
         // Remove reaction
         await updateDoc(commentRef, {
           reactions: arrayRemove(currentUser.uid)
         });
-        
-        // Update local state
-        const updatedComments = [...comments];
-        updatedComments[commentIndex] = {
-          ...comment,
-          reactions: comment.reactions?.filter(id => id !== currentUser.uid) || []
-        };
-        setComments(updatedComments);
       } else {
         // Add reaction
         await updateDoc(commentRef, {
           reactions: arrayUnion(currentUser.uid)
         });
-        
-        // Update local state
-        const updatedComments = [...comments];
-        updatedComments[commentIndex] = {
-          ...comment,
-          reactions: [...(comment.reactions || []), currentUser.uid]
-        };
-        setComments(updatedComments);
       }
+
+      // Update local state
+      setComments(comments.map(c =>
+        c.id === commentId
+          ? {
+              ...c,
+              reactions: isReacted
+                ? c.reactions?.filter(uid => uid !== currentUser.uid)
+                : [...(c.reactions || []), currentUser.uid]
+            }
+          : c
+      ));
+
     } catch (error) {
-      console.error('Error updating comment reaction:', error);
+      console.error('Error reacting to comment:', error);
     }
   };
 
@@ -320,7 +290,7 @@ export default function PostDetailPage() {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gtgram-green"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gtgram-green"></div>
         </div>
       </MainLayout>
     );
@@ -329,13 +299,15 @@ export default function PostDetailPage() {
   if (error || !post) {
     return (
       <MainLayout>
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h1 className="text-2xl font-bold text-gtgram-dark mb-4">
-            {error || "Post not found"}
-          </h1>
-          <Link href="/home" className="text-gtgram-green hover:underline">
-            Return to Home
-          </Link>
+        <div className="flex flex-col justify-center items-center h-screen text-center">
+          <h2 className="text-xl font-semibold mb-2">Oops, something went wrong.</h2>
+          <p className="text-gray-600 mb-4">{error || "This post could not be loaded."}</p>
+          <button
+            onClick={() => router.back()}
+            className="bg-gtgram-green text-white px-4 py-2 rounded-lg"
+          >
+            Go Back
+          </button>
         </div>
       </MainLayout>
     );
@@ -343,14 +315,21 @@ export default function PostDetailPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg overflow-hidden shadow-md">
+       <div className="max-w-6xl mx-auto p-4">
+        <div className="flex items-center mb-4">
+            <button onClick={() => router.back()} className="text-2xl mr-4">
+                <IoArrowBack />
+            </button>
+            <h1 className="text-xl font-bold">Post</h1>
+        </div>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="flex flex-col md:flex-row">
           {/* Left side - Media */}
           <div className="md:w-3/5 bg-black">
             {post.mediaType === 'video' ? (
               <div className="relative aspect-square">
-                <video 
-                  src={post.mediaUrls?.[0] || ''} 
+                <video
+                  src={post.mediaUrls?.[0] || ''}
                   controls
                   className="w-full h-full object-contain"
                 />
@@ -361,16 +340,16 @@ export default function PostDetailPage() {
               </div>
             )}
           </div>
-          
+
           {/* Right side - Info and Comments */}
           <div className="md:w-2/5 flex flex-col bg-white">
             {/* Header */}
             <div className="flex items-center p-4 border-b border-gtgram-gray">
               <Link href={`/profile/${post.userId}`} className="flex items-center">
                 <div className="w-8 h-8 relative rounded-full overflow-hidden mr-3">
-                  <Image 
-                    src={user?.photoURL || placeholders.avatar} 
-                    alt={user?.username || 'User'} 
+                  <Image
+                    src={user?.photoURL || placeholders.avatar}
+                    alt={user?.username || 'User'}
                     fill
                     sizes="32px"
                     className="object-cover"
@@ -382,7 +361,7 @@ export default function PostDetailPage() {
                 </div>
               </Link>
             </div>
-            
+
             {/* Caption and Comments */}
             <div className="flex-grow overflow-y-auto p-4">
               {/* Caption */}
@@ -390,9 +369,9 @@ export default function PostDetailPage() {
                 <div className="flex mb-4">
                   <Link href={`/profile/${post.userId}`} className="flex-shrink-0">
                     <div className="w-8 h-8 relative rounded-full overflow-hidden mr-3">
-                      <Image 
-                        src={user?.photoURL || placeholders.avatar} 
-                        alt={user?.username || 'User'} 
+                      <Image
+                        src={user?.photoURL || placeholders.avatar}
+                        alt={user?.username || 'User'}
                         fill
                         sizes="32px"
                         className="object-cover"
@@ -408,30 +387,30 @@ export default function PostDetailPage() {
                     </div>
                     <span className="text-gtgram-dark">{post.caption}</span>
                     <p className="text-xs text-gray-500 mt-1">
-                      {post.createdAt && post.createdAt.toDate ? 
-                        formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : 
+                      {post.createdAt && post.createdAt.toDate ?
+                        formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) :
                         'Recently'}
                     </p>
                   </div>
                 </div>
               )}
-              
+
               {/* Product Information */}
               {post.productInfo && post.productInfo.link && (
                 <div className="mb-4">
                   <ProductInfo productInfo={post.productInfo} />
                 </div>
               )}
-              
+
               {/* Comments */}
               <div className="space-y-4">
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex group">
                     <Link href={`/profile/${comment.userId}`} className="flex-shrink-0">
                       <div className="w-8 h-8 relative rounded-full overflow-hidden mr-3">
-                        <Image 
-                          src={comment.user.photoURL} 
-                          alt={comment.user.username} 
+                        <Image
+                          src={comment.user.photoURL}
+                          alt={comment.user.username}
                           fill
                           sizes="32px"
                           className="object-cover"
@@ -447,13 +426,13 @@ export default function PostDetailPage() {
                       </div>
                       <span className="text-gtgram-dark">{comment.text}</span>
                       <p className="text-xs text-gray-500 mt-1">
-                        {comment.createdAt && comment.createdAt.toDate ? 
-                          formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true }) : 
+                        {comment.createdAt && comment.createdAt.toDate ?
+                          formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true }) :
                           'Recently'}
                       </p>
                     </div>
                     <div className="ml-2 flex items-start">
-                      <ReactionButton 
+                      <ReactionButton
                         isReacted={comment.reactions?.includes(currentUser?.uid || '') || false}
                         reactionCount={comment.reactions?.length || 0}
                         onReact={() => handleCommentReaction(comment.id)}
@@ -464,7 +443,7 @@ export default function PostDetailPage() {
                 ))}
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="p-4 border-t border-gtgram-gray">
               <div className="flex justify-between mb-3">
@@ -472,7 +451,7 @@ export default function PostDetailPage() {
                   <button onClick={handleLike} className="text-2xl text-gtgram-green">
                     {liked ? <AiFillHeart /> : <AiOutlineHeart />}
                   </button>
-                  
+
                   {/* Shopping Bag Icon (only shown if post has product info) */}
                   {post.productInfo && (
                     <Link href={post.productInfo?.link || '#'} target="_blank" rel="noopener noreferrer" className="mr-4">
@@ -484,12 +463,12 @@ export default function PostDetailPage() {
                   {saved ? <BsBookmarkFill /> : <BsBookmark />}
                 </button>
               </div>
-              
+
               {/* Likes count */}
               <div className="font-semibold text-gtgram-dark mb-2">
                 {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
               </div>
-              
+
               {/* Add Comment */}
               <form onSubmit={handleAddComment} className="flex mt-3">
                 <input
@@ -513,6 +492,7 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
+      </div>
     </MainLayout>
   );
-} 
+}

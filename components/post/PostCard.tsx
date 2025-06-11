@@ -30,6 +30,7 @@ const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaH
 
 export default function PostCard({ post, onLike, isDetailView = false }: PostCardProps) {
   const { user } = useAuth();
+  const [authorName, setAuthorName] = useState(post.username);
   const likes = post?.likes || [];
   const [isLiked, setIsLiked] = useState(isValidUser(user) && user ? arrayIncludesUserId(likes, user.uid) : false);
   const [likesCount, setLikesCount] = useState(Array.isArray(likes) ? likes.length : 0);
@@ -37,6 +38,24 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
   const [isSaved, setIsSaved] = useState(false);
   const [showProductFrame, setShowProductFrame] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Fetch author's full name
+    const fetchAuthorName = async () => {
+      try {
+        const userRef = doc(db, 'users', post.userId);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setAuthorName(userData.fullName || post.username);
+        }
+      } catch (error) {
+        console.error("Error fetching author's name:", error);
+      }
+    };
+
+    fetchAuthorName();
+  }, [post.userId, post.username]);
 
   useEffect(() => {
     // Check if the post is saved by the current user
@@ -135,7 +154,7 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
             className="mr-2 sm:mr-3 flex-shrink-0"
           />
           <div className="flex items-center min-w-0">
-            <span className="font-semibold text-gtgram-dark text-sm sm:text-base truncate">{post.username}</span>
+            <span className="font-semibold text-gtgram-dark text-sm sm:text-base truncate">{authorName}</span>
             {post.bluemark && <BlueMark size={12} className="ml-1 flex-shrink-0" />}
           </div>
         </Link>
@@ -203,7 +222,7 @@ export default function PostCard({ post, onLike, isDetailView = false }: PostCar
         {post.caption && (
           <div className="mt-1">
             <div className="flex flex-wrap">
-              <span className="font-semibold text-gtgram-dark mr-2 text-sm sm:text-base">{post.username}</span>
+              <span className="font-semibold text-gtgram-dark mr-2 text-sm sm:text-base">{authorName}</span>
               <span className="text-gtgram-dark text-sm sm:text-base break-words">
                 {captionToShow}
                 {shouldTruncateCaption && (
